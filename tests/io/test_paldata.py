@@ -12,6 +12,7 @@ from swarmpal.io._paldata import PalDataItem, create_paldata
 
 from ..test_data import load_test_dataset
 
+
 def vires_checks(item):
     # Type checks
     assert isinstance(item.xarray, Dataset)
@@ -42,11 +43,11 @@ def vires_checks(item):
     return item.xarray
 
 
-
 @pytest.mark.cached()
 def test_paldataitem_vires():
     item = load_test_dataset("test_paldataitem_vires.nc4", group="SW_OPER_MAGA_LR_1B")
     return vires_checks(item)
+
 
 @pytest.mark.cached()
 @pytest.fixture()
@@ -55,6 +56,7 @@ def xarray_data_file(tmp_path):
     target_output = join_path(tmp_path, "test_data.nc")
     ds.to_netcdf(target_output)
     return target_output
+
 
 def hapi_checks(item):
     # Type checks

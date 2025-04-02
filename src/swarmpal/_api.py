@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from swarmpal.io._paldata import PalDataItem, create_paldata
+
+from swarmpal.io._paldata import PalDataItem
 
 processes_by_name = {}
 
@@ -48,7 +49,7 @@ def apply_process(data, process_name=None, config={}):
 
 
 def _str_to_timedelta(time):
-    '''Convert strings that match 'HH:MM:SS' to datetime.timedelta ojbects.'''
+    """Convert strings that match 'HH:MM:SS' to datetime.timedelta ojbects."""
     hours, minutes, seconds = (int(part) for part in time.split(":"))
     return timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
@@ -78,11 +79,8 @@ def get_data(provider="", config={}, options=None):
                   - `dict(logging=False)`
     """
     # Convert pad_times from strings to timedelta objects
-    if 'pad_times' in config:
-        config['pad_times'] = [
-            _str_to_timedelta(time)
-            for time in config['pad_times']
-        ]
+    if "pad_times" in config:
+        config["pad_times"] = [_str_to_timedelta(time) for time in config["pad_times"]]
 
     # Download the data
     if provider == "vires":
