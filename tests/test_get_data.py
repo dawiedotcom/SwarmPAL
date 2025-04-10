@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from xarray import DataTree
 
 from swarmpal import get_data
+from swarmpal.io import PalDataItem
 
 from .io.test_paldata import hapi_checks, vires_checks
 
@@ -24,7 +26,10 @@ def test_get_data_vires():
     )
 
     item = get_data(**data_spec)
-    vires_checks(item)
+    assert isinstance(item, DataTree)
+    palitem = PalDataItem.from_manual(item["/SW_OPER_MAGA_LR_1B"].to_dataset())
+    palitem.dataset_name = "SW_OPER_MAGA_LR_1B"
+    vires_checks(palitem)
 
 
 @pytest.mark.remote()
@@ -41,7 +46,10 @@ def test_get_data_hapi():
     )
 
     item = get_data(**data_spec)
-    hapi_checks(item)
+    assert isinstance(item, DataTree)
+    dataitem = PalDataItem.from_manual(item["/SW_OPER_MAGA_LR_1B"].to_dataset())
+    dataitem.dataset_name = "SW_OPER_MAGA_LR_1B"
+    hapi_checks(dataitem)
 
 
 @pytest.mark.remote()
@@ -58,11 +66,13 @@ def test_pad_times():
         ),
     )
     item = get_data(**data_spec)
+    palitem = PalDataItem.from_manual(item["/SW_OPER_MAGA_LR_1B"].to_dataset())
+    palitem.dataset_name = "SW_OPER_MAGA_LR_1B"
 
-    assert "Timestamp" in item.xarray
-    assert item.xarray["Timestamp"].to_numpy()[0] >= np.datetime64(
+    assert "Timestamp" in palitem.xarray
+    assert palitem.xarray["Timestamp"].to_numpy()[0] >= np.datetime64(
         "2015-12-31T23:59:57"
     )
-    assert item.xarray["Timestamp"].to_numpy()[-1] <= np.datetime64(
+    assert palitem.xarray["Timestamp"].to_numpy()[-1] <= np.datetime64(
         "2016-01-01T00:00:14"
     )

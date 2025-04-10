@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from swarmpal.io._paldata import PalDataItem
+from swarmpal.io._paldata import PalDataItem, create_paldata
 
 processes_by_name = {}
 
@@ -49,7 +49,7 @@ def apply_process(data, process_name=None, config={}):
 
 
 def _str_to_timedelta(time):
-    """Convert strings that match 'HH:MM:SS' to datetime.timedelta ojbects."""
+    """Convert strings that match 'HH:MM:SS' to datetime.timedelta objects."""
     hours, minutes, seconds = (int(part) for part in time.split(":"))
     return timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
@@ -85,11 +85,11 @@ def get_data(provider="", config={}, options=None):
     # Download the data
     if provider == "vires":
         options = options or dict(asynchronous=False, show_progress=False)
-        return PalDataItem.from_vires(options=options, **config)
+        return create_paldata(PalDataItem.from_vires(options=options, **config))
 
     if provider == "hapi":
         options = options or dict(logging=False)
-        return PalDataItem.from_hapi(options=options, **config)
+        return create_paldata(PalDataItem.from_hapi(options=options, **config))
 
     raise ValueError(
         f"Unknown provider {provider}. Provider must be one of ['vires', 'hapi']."
