@@ -3,7 +3,7 @@ from __future__ import annotations
 from swarmpal import express, io, toolboxes, utils
 from swarmpal._api import (
     apply_process,
-    get_data,
+    fetch_data,
     make_process,
 )
 
@@ -17,5 +17,5 @@ __all__ = (
     "utils",
     "make_process",
     "apply_process",
-    "get_data",
+    "fetch_data",
 )

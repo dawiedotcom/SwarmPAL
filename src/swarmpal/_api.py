@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from xarray import DataTree
 
 from swarmpal.io._paldata import PalDataItem, create_paldata
 
@@ -37,7 +38,7 @@ def apply_process(data, process_name=None, config={}):
 
     Parameters
     ----------
-    data: PalDataItem
+    data: DataTree
         the data on which the process will be applied to.
     process_name: Str
         the name of the process to apply. See ... for a list of Toolboxes and their Processes.
@@ -54,15 +55,14 @@ def _str_to_timedelta(time):
     return timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
 
-def get_data(provider="", config={}, options=None):
-    """Downloads a dataset from a data provider with a specified configuration.
-
+def _fetch_dataset(provider="", config={}, options=None):
+    """Helper that downloads a single dataset from a data provider with a specified configuration.
     Parameters
     ----------
     provider: Str
         The name of the data provider. Must be one of ['vires', 'hapi'].
-    config: dict
-        The configuration passed to `create_paldata`.
+    config: List
+        A configuration passed to `create_paldata`.
         TODO: describe the 'schema'
     options: dict or None
         The option passed to `create_paldata`. When None, the following defaults are used:
@@ -94,3 +94,22 @@ def get_data(provider="", config={}, options=None):
     raise ValueError(
         f"Unknown provider {provider}. Provider must be one of ['vires', 'hapi']."
     )
+
+def fetch_data(configurations):
+    """Downloads list of datasets and returns a unified DataTree.
+
+    Parameters
+    ----------
+    configurations: List
+        A list of configurations passed to `create_paldata`.
+        TODO: describe the 'schema'
+    Returns
+    -------
+
+    """
+    data = DataTree()
+    for dataset_config in configurations:
+        item = _fetch_dataset(**dataset_config)
+        for key, dt in item.children.items():
+            data[key] = dt
+    return data

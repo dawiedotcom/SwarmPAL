@@ -4,15 +4,15 @@ import numpy as np
 import pytest
 from xarray import DataTree
 
-from swarmpal import get_data
+from swarmpal import fetch_data
 from swarmpal.io import PalDataItem
 
 from .io.test_paldata import hapi_checks, vires_checks
 
 
 @pytest.mark.remote()
-def test_get_data_vires():
-    data_spec = dict(
+def test_fetch_data_vires():
+    data_spec = [dict(
         provider="vires",
         config=dict(
             collection="SW_OPER_MAGA_LR_1B",
@@ -23,9 +23,9 @@ def test_get_data_vires():
             filters=["(Longitude > 92.8) AND (Latitude < -72.57)"],
             server_url="https://vires.services/ows",
         ),
-    )
+    )]
 
-    item = get_data(**data_spec)
+    item = fetch_data(data_spec)
     assert isinstance(item, DataTree)
     palitem = PalDataItem.from_manual(item["/SW_OPER_MAGA_LR_1B"].to_dataset())
     palitem.dataset_name = "SW_OPER_MAGA_LR_1B"
@@ -33,8 +33,8 @@ def test_get_data_vires():
 
 
 @pytest.mark.remote()
-def test_get_data_hapi():
-    data_spec = dict(
+def test_fetch_data_hapi():
+    data_spec = [dict(
         provider="hapi",
         config=dict(
             dataset="SW_OPER_MAGA_LR_1B",
@@ -43,9 +43,9 @@ def test_get_data_hapi():
             stop="2016-01-01T00:00:10",
             server="https://vires.services/hapi",
         ),
-    )
+    )]
 
-    item = get_data(**data_spec)
+    item = fetch_data(data_spec)
     assert isinstance(item, DataTree)
     dataitem = PalDataItem.from_manual(item["/SW_OPER_MAGA_LR_1B"].to_dataset())
     dataitem.dataset_name = "SW_OPER_MAGA_LR_1B"
@@ -54,7 +54,7 @@ def test_get_data_hapi():
 
 @pytest.mark.remote()
 def test_pad_times():
-    data_spec = dict(
+    data_spec = [dict(
         provider="vires",
         config=dict(
             collection="SW_OPER_MAGA_LR_1B",
@@ -64,8 +64,9 @@ def test_pad_times():
             pad_times=["0:00:03", "0:00:05"],
             server_url="https://vires.services/ows",
         ),
-    )
-    item = get_data(**data_spec)
+    )]
+    print(data_spec)
+    item = fetch_data(data_spec)
     palitem = PalDataItem.from_manual(item["/SW_OPER_MAGA_LR_1B"].to_dataset())
     palitem.dataset_name = "SW_OPER_MAGA_LR_1B"
 

@@ -7,7 +7,7 @@ import click
 import yaml
 from xarray import DataTree
 
-from swarmpal import get_data, make_process
+from swarmpal import fetch_data, make_process
 from swarmpal.express import fac_single_sat as _fac_single_sat
 from swarmpal.utils.configs import SPACECRAFT_TO_MAGLR_DATASET
 from swarmpal.utils.queries import last_available_time as _last_available_time
@@ -104,7 +104,7 @@ def batch(out_dir: click.Path, write_registry: bool, config: click.File):
     for name, dataset in datasets.items():
         data = DataTree()
         for dataset_config in dataset["data"]:
-            item = get_data(**dataset_config)
+            item = fetch_data(**dataset_config)
             for key, dt in item.children.items():
                 data[key] = dt
 
