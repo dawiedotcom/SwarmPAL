@@ -7,7 +7,7 @@ import click
 import yaml
 from xarray import DataTree
 
-from swarmpal import fetch_data, make_process
+import swarmpal
 from swarmpal.express import fac_single_sat as _fac_single_sat
 from swarmpal.utils.configs import SPACECRAFT_TO_MAGLR_DATASET
 from swarmpal.utils.queries import last_available_time as _last_available_time
@@ -46,6 +46,19 @@ def last_available_time(collection):
     """UTC of last available data for a collection, e.g. SW_FAST_MAGA_LR_1B"""
     time = _last_available_time(collection)
     click.echo(time.isoformat())
+
+
+@cli.command(add_help_option=True, short_help="Fetch datasets from Vires or Hapi")
+@click.argument("config", type=click.File("r"))
+@click.argument("out", type=click.File("w"))
+def fetch_data(config, out):
+    """Fetch data described in yaml file CONFIG and save the resulting DataTree in NetCDF file OUT"""
+
+    with open(config.name) as f:
+        datasets = yaml.safe_load(f)
+
+    data = swarmpal.fetch_data(datasets)
+    data.to_netcdf(out.name)
 
 
 def _calc_md5sum(filename):
@@ -104,13 +117,13 @@ def batch(out_dir: click.Path, write_registry: bool, config: click.File):
     for name, dataset in datasets.items():
         data = DataTree()
         for dataset_config in dataset["data"]:
-            item = fetch_data(**dataset_config)
+            item = swarmpal.fetch_data(**dataset_config)
             for key, dt in item.children.items():
                 data[key] = dt
 
         # Apply processes
         for process_spec in dataset.get("processes", []):
-            process = make_process(**process_spec)
+            process = swarmpal.make_process(**process_spec)
             data = process(data)
 
         # Save the results as a NetCDF file
