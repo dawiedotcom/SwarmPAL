@@ -12,18 +12,20 @@ from .io.test_paldata import hapi_checks, vires_checks
 
 @pytest.mark.remote()
 def test_fetch_data_vires():
-    data_spec = [dict(
-        provider="vires",
-        config=dict(
-            collection="SW_OPER_MAGA_LR_1B",
-            measurements=["F", "B_NEC"],
-            models=["IGRF"],
-            start_time="2016-01-01T00:00:00",
-            end_time="2016-01-01T00:00:10",
-            filters=["(Longitude > 92.8) AND (Latitude < -72.57)"],
-            server_url="https://vires.services/ows",
-        ),
-    )]
+    data_spec = [
+        dict(
+            provider="vires",
+            config=dict(
+                collection="SW_OPER_MAGA_LR_1B",
+                measurements=["F", "B_NEC"],
+                models=["IGRF"],
+                start_time="2016-01-01T00:00:00",
+                end_time="2016-01-01T00:00:10",
+                filters=["(Longitude > 92.8) AND (Latitude < -72.57)"],
+                server_url="https://vires.services/ows",
+            ),
+        )
+    ]
 
     item = fetch_data(data_spec)
     assert isinstance(item, DataTree)
@@ -34,16 +36,18 @@ def test_fetch_data_vires():
 
 @pytest.mark.remote()
 def test_fetch_data_hapi():
-    data_spec = [dict(
-        provider="hapi",
-        config=dict(
-            dataset="SW_OPER_MAGA_LR_1B",
-            parameters="F,B_NEC",
-            start="2016-01-01T00:00:00",
-            stop="2016-01-01T00:00:10",
-            server="https://vires.services/hapi",
-        ),
-    )]
+    data_spec = [
+        dict(
+            provider="hapi",
+            config=dict(
+                dataset="SW_OPER_MAGA_LR_1B",
+                parameters="F,B_NEC",
+                start="2016-01-01T00:00:00",
+                stop="2016-01-01T00:00:10",
+                server="https://vires.services/hapi",
+            ),
+        )
+    ]
 
     item = fetch_data(data_spec)
     assert isinstance(item, DataTree)
@@ -54,17 +58,19 @@ def test_fetch_data_hapi():
 
 @pytest.mark.remote()
 def test_pad_times():
-    data_spec = [dict(
-        provider="vires",
-        config=dict(
-            collection="SW_OPER_MAGA_LR_1B",
-            measurements=["F", "B_NEC"],
-            start_time="2016-01-01T00:00:00",
-            end_time="2016-01-01T00:00:10",
-            pad_times=["0:00:03", "0:00:05"],
-            server_url="https://vires.services/ows",
-        ),
-    )]
+    data_spec = [
+        dict(
+            provider="vires",
+            config=dict(
+                collection="SW_OPER_MAGA_LR_1B",
+                measurements=["F", "B_NEC"],
+                start_time="2016-01-01T00:00:00",
+                end_time="2016-01-01T00:00:10",
+                pad_times=["0:00:03", "0:00:05"],
+                server_url="https://vires.services/ows",
+            ),
+        )
+    ]
     print(data_spec)
     item = fetch_data(data_spec)
     palitem = PalDataItem.from_manual(item["/SW_OPER_MAGA_LR_1B"].to_dataset())

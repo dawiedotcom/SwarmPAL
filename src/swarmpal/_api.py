@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+
 from xarray import DataTree
 
 from swarmpal.io._paldata import PalDataItem, create_paldata
@@ -94,6 +95,7 @@ def _fetch_dataset(provider="", config={}, options=None):
     raise ValueError(
         f"Unknown provider {provider}. Provider must be one of ['vires', 'hapi']."
     )
+
 
 def fetch_data(configurations):
     """Downloads list of datasets and returns a unified DataTree.
