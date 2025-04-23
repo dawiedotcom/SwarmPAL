@@ -5,6 +5,7 @@ from datetime import timedelta
 from xarray import DataTree
 
 from swarmpal.io._paldata import PalDataItem, create_paldata
+from swarmpal.schema import validate as _validate
 
 processes_by_name = {}
 
@@ -109,9 +110,14 @@ def fetch_data(configurations):
     -------
 
     """
+
+    _validate(configurations)
+
     data = DataTree()
-    for dataset_config in configurations:
-        item = _fetch_dataset(**dataset_config)
+    for dataset_config in configurations["data_params"]:
+        provider = dataset_config.pop("provider")
+        options = dataset_config.pop("options", {})
+        item = _fetch_dataset(provider=provider, options=options, config=dataset_config)
         for key, dt in item.children.items():
             data[key] = dt
     return data

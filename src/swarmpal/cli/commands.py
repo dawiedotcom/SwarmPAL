@@ -1,16 +1,19 @@
 from __future__ import annotations
 
-import hashlib
-from pathlib import Path
-
 import click
 import yaml
-from xarray import DataTree
 
 import swarmpal
 from swarmpal.express import fac_single_sat as _fac_single_sat
 from swarmpal.utils.configs import SPACECRAFT_TO_MAGLR_DATASET
 from swarmpal.utils.queries import last_available_time as _last_available_time
+
+
+def _read_config(filename):
+    """Helper function to read and validate YAML config files"""
+    with open(filename) as f:
+        datasets = yaml.safe_load(f)
+    return datasets
 
 
 @click.group()
@@ -54,88 +57,30 @@ def last_available_time(collection):
 def fetch_data(config, out):
     """Fetch data described in yaml file CONFIG and save the resulting DataTree in NetCDF file OUT"""
 
-    with open(config.name) as f:
-        datasets = yaml.safe_load(f)
-
-    data = swarmpal.fetch_data(datasets)
+    dataset_config = _read_config(config.name)
+    data = swarmpal.fetch_data(dataset_config)
     data.to_netcdf(out.name)
-
-
-def _calc_md5sum(filename):
-    """Calculate the md5sum of the content of a file"""
-    return hashlib.md5(open(filename, "rb").read()).hexdigest()
 
 
 @cli.command(
     add_help_option=True,
     short_help="Process datasets in batch mode",
-    help="Process datasets in batch mode for a given CONFIG file in yaml format",
-)
-@click.option(
-    "--out-dir",
-    "out_dir",
-    type=Path,
-    default=Path("."),
-    show_default=True,
-    help="Directory prefix for output files.",
-)
-@click.option(
-    "--write-registry",
-    "write_registry",
-    is_flag=True,
-    show_default=True,
-    default=False,
-    help="Writes a registry.txt file with md5sum",
+    # help="Process datasets in batch mode for a given CONFIG file in yaml format",
 )
 @click.argument("config", type=click.File("r"))
-def batch(out_dir: click.Path, write_registry: bool, config: click.File):
+@click.argument("out", type=click.File("w"))
+def batch(config: click.File, out: click.Path):
     """Run SwarmPAL in batch mode. The datasets and processes need to be specified in YAML file and
-    passed as the first CONFIG argument. The results are written to NetCDF files specified by out_dir.
+    passed as the first CONFIG argument. The results are written to NetCDF files specified by OUT."""
 
-    Parameters
-    ----------
-    out_dir: Path
-        The directory where the results are written to. Defaults to the current directory.
-    config: File
-        The YAML file that defines the datasets and processes.
+    dataset_config = _read_config(config.name)
+    data = swarmpal.fetch_data(dataset_config)
 
-        TODO: describe yaml schema
+    # Apply processes
+    for process_spec in dataset_config.get("process_params", []):
+        process_name = process_spec.pop("process_name")
+        process = swarmpal.make_process(process_name=process_name, config=process_spec)
+        data = process(data)
 
-    Examples
-    --------
-    $ cat config.yaml
-
-
-    $ swarmpal batch config.yaml
-
-    Will ...
-    """
-    with open(config.name) as f:
-        datasets = yaml.safe_load(f)
-
-    registry = {}
-    for name, dataset in datasets.items():
-        data = DataTree()
-        for dataset_config in dataset["data"]:
-            item = swarmpal.fetch_data(**dataset_config)
-            for key, dt in item.children.items():
-                data[key] = dt
-
-        # Apply processes
-        for process_spec in dataset.get("processes", []):
-            process = swarmpal.make_process(**process_spec)
-            data = process(data)
-
-        # Save the results as a NetCDF file
-        filename = f"{name}.nc4"
-        filepath = out_dir / filename
-
-        data.to_netcdf(filepath)
-        if write_registry:
-            registry[filename] = _calc_md5sum(filepath)
-
-    if write_registry:
-        registry_name = out_dir / "registry.txt"
-        with open(registry_name, "w") as f:
-            for filename, md5sum in registry.items():
-                f.write(f"{filename} md5:{md5sum}\n")
+    # Save the results as a NetCDF file
+    data.to_netcdf(out.name)
