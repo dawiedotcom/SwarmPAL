@@ -42,6 +42,7 @@ class Preprocess(PalProcess):
         flagclean_varname: str = "",
         flagclean_flagname: str = "",
         flagclean_maxval: int | None = None,
+        tfa_dataset: str = "PAL_TFA",
     ) -> None:
         """Set the process configuration
 
@@ -73,6 +74,8 @@ class Preprocess(PalProcess):
             Name of the flag to use to clean by
         flagclean_maxval : int, optional
             Maximum allowable flag value
+        tfa_dataset : str
+            Sets the name of the dataset in the data tree that TFA processes will write results to
 
         Notes
         -----
@@ -99,6 +102,7 @@ class Preprocess(PalProcess):
             flagclean_varname=flagclean_varname,
             flagclean_flagname=flagclean_flagname,
             flagclean_maxval=flagclean_maxval,
+            tfa_dataset=tfa_dataset,
         )
 
     @property
@@ -131,12 +135,11 @@ class Preprocess(PalProcess):
         # Rename (Timestamp/Time) to TFA_Time to avoid collision
         da = da.rename({self.config["timevar"]: "TFA_Time"})
         da = self._constant_cadence(da)
-        ds = ds.assign({"TFA_Variable": da, "TFA_Time": da["TFA_Time"]})
+        ds_out = Dataset(data_vars={"TFA_Variable": da, "TFA_Time": da["TFA_Time"]})
         # Remove attrs, because .to_netcdf() is failing when blank units are set here
-        ds["TFA_Time"].attrs = {}
+        ds_out["TFA_Time"].attrs = {}
         # Assign dataset back into the datatree to return
-        self.subtree = self.subtree.assign(ds.copy())
-        datatree[self.config.get("dataset")] = self.subtree
+        datatree[self.config.get("tfa_dataset")] = ds_out
         return datatree
 
     def _validate_inputs(self, datatree):
@@ -271,7 +274,7 @@ def _get_tfa_active_subtree(datatree):
     tfa_preprocess_meta = pal_processes_meta.get("TFA_Preprocess")
     if not tfa_preprocess_meta:
         raise PalError("Must first run tfa.processes.Preprocess")
-    return datatree[tfa_preprocess_meta.get("dataset")]
+    return datatree[tfa_preprocess_meta.get("tfa_dataset")]
 
 
 def _get_sampling_rate(datatree):

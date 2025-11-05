@@ -27,41 +27,49 @@ def test_by_name():
 
 @pytest.mark.cached()
 def test_tfa_basic():
+    """Test a basic application of the TFA toolbox to a Swarm data product.
+
+    In the test dataset the TFA toolbox output is written to the /PAL_TFA group.
+    The unit test will rerun the analysis, place the new results in /PAL_TFA_TEST and
+    compare to the original results.
+    """
     product_name = "SW_OPER_MAGA_LR_1B"
-    input_data = DataTree.from_dict(
+    original_output_group = "PAL_TFA"
+    test_output_group = "PAL_TFA_TEST"
+    data = DataTree.from_dict(
         {
-            "SW_OPER_MAGA_LR_1B": load_test_datatree(
-                "test_tfa_basic.nc4", group=product_name
+            product_name: load_test_datatree("test_tfa_basic.nc4", group=product_name),
+            original_output_group: load_test_datatree(
+                "test_tfa_basic.nc4", group=original_output_group
             ),
         }
     )
 
-    assert product_name in input_data
-    assert "PAL_meta" not in input_data.attrs
+    assert product_name in data
+    assert "PAL_meta" not in data.attrs
 
     dataset_meta = load_test_config("test_tfa_basic")
-    input_data = apply_processes(input_data, dataset_meta["process_params"])
+    dataset_meta["process_params"][0]["tfa_dataset"] = test_output_group
 
-    assert "PAL_meta" in input_data.attrs
-    assert "TFA_Time" in input_data[product_name]
+    data = apply_processes(data, dataset_meta["process_params"])
 
-    test_data = load_test_datatree("test_tfa_basic.nc4")
+    assert "PAL_meta" in data.attrs
+    assert "TFA_Time" in data[test_output_group]
 
     variables = [
         "TFA_Variable",
         "wavelet_power",
         "scale",
-        "B_NEC_res_Model",
     ]
 
     for variable in variables:
-        assert variable in input_data[product_name]
-        assert len(test_data[product_name][variable]) == len(
-            input_data[product_name][variable]
+        assert variable in data[test_output_group]
+        assert len(data[test_output_group][variable]) == len(
+            data[original_output_group][variable]
         )
 
         diff = (
-            test_data[product_name][variable] - input_data[product_name][variable]
+            data[test_output_group][variable] - data[original_output_group][variable]
         ).to_numpy()
 
         assert np.all((np.abs(diff) < 1e-10) | np.isnan(diff))
